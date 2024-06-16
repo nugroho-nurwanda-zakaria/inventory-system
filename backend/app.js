@@ -1,18 +1,26 @@
 const express = require('express');
-const router = require('./routers');
-const { sequelize } = require('./models');
+const cors = require('cors');
 
+// INITIALIZATION
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+// INIT ROUTES
+const routes = require('./routes');
+
+// MIDDLEWARES
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads'));
+app.use(routes);
+
+// SERVER LISTENER
+app.listen(3000, () => {
+  console.log(`Server running at http://localhost:3000`);
+})
 
 
-app.use(router);
-
-sequelize.sync().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-});
+// NOTE : 
+// -----------------------------------------------------------
+// NDAK USAH DI UTAK ATIK BAGIAN APP JS
+// ----------------------------------------------------------

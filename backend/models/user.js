@@ -16,8 +16,17 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   
   User.associate = function(models) {
-    User.hasMany(models.Product, { foreignKey: 'createdBy', as: 'CreatedProducts' });
-    User.hasMany(models.Product, { foreignKey: 'updatedBy', as: 'UpdatedProducts' });
+    User.hasMany(models.Product, {
+      foreignKey: 'createdBy',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
+
+    User.hasMany(models.Product, {
+      foreignKey: 'updatedBy',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
   };
   
   return User;
