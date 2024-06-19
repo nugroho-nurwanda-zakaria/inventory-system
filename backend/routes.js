@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 
 // DEFINE CONTROLLER (IMPORT CONTRONLLER)
-const { register, login } = require('./controllers/userController');
+const { register, login, updateImageProfile } = require('./controllers/userController');
 const { getAllCategories, creteateNewCategory, detailCategoryById , updateCategoryById, deleteCategoryById} = require('./controllers/categoryController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } = require('./controllers/productController');
 
-// const upload = require('./middlewares/upload');
+const upload = require('./middleware/upload');
+const { UPDATE } = require('sequelize/lib/query-types');
 
 
 // FORMAT DEFINE ROUTER
@@ -17,6 +18,9 @@ const { getAllProducts, getProductById, createProduct, updateProduct, deleteProd
 router.post('/register', register);
 router.post('/login', login);
 
+// ROUTE HANDLING IMAGE PROFILE
+router.patch('/update-image/:userid', upload.single('image'), updateImageProfile)
+
 // ROUTE UNTUK HANDLE DATA  CATEGORY
 router.get('/categories', getAllCategories);
 router.post('/categories', creteateNewCategory);
@@ -26,9 +30,9 @@ router.delete('/categories/:id', deleteCategoryById);
 
 
 // ROUTE UNTUK HANDLE DATA PRODUCT
-router.get('/products', getAllProducts);
-router.get('/products/:id', getProductById);
-router.post('/products', createProduct);
+router.get('/products/:userid', getAllProducts);
+router.get('/products/detail/:id', getProductById);
+router.post('/products/:userid', createProduct);
 router.patch('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
 

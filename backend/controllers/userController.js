@@ -58,4 +58,13 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+const updateImageProfile = async (req, res) => {
+  try {
+    const { id } = req.params
+    const image = req.file;
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+module.exports = { register, login, updateImageProfile };
