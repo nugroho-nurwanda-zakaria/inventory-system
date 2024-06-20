@@ -51,17 +51,25 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 obscureText: true,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {
                   // Add logic to handle username and password update
                 },
+                style: ElevatedButton.styleFrom(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero, // Kotak tanpa radius
+                  ),
+                ),
                 child: const Text('Update'),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.grey[300],
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero, // Kotak tanpa radius
+                  ),
                 ),
                 onPressed: _logout,
                 child: const Text('Logout'),
