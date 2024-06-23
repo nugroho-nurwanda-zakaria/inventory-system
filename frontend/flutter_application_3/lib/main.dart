@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
-import 'register_page.dart';
-import 'main_menu_page.dart';
+import 'package:flutter_application_3/providers/auth_provider.dart';
+import 'package:flutter_application_3/login_page.dart';
+import 'package:flutter_application_3/register_page.dart';
+import 'package:flutter_application_3/main_menu_page.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,15 +22,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Inventory Management System',
+      title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/',
+      initialRoute: '/login', // Initial route set to login
       routes: {
-        '/': (context) => const LoginPage(),
+        '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
-        '/main-menu': (context) => const MainMenuPage(),
+        '/main_menu': (context) => const MainMenuPage(),
       },
     );
   }

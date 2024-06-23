@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_3/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _RegisterPageState createState() => _RegisterPageState();
-}
-
-class _RegisterPageState extends State<RegisterPage> {
-  final _userController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  @override
   Widget build(BuildContext context) {
+    var authProvider = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventory Management System'),
@@ -47,12 +41,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     'Create a new account',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: _userController,
+                  TextFormField(
+                    controller: authProvider.usernameController,
                     decoration: const InputDecoration(
                       labelText: 'Username',
                       border: OutlineInputBorder(),
@@ -61,36 +55,47 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
+                  TextFormField(
+                    controller: authProvider.passwordController,
+                    decoration: InputDecoration(
                       labelText: 'Password',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       filled: true,
                       fillColor: Colors.white70,
-                      suffixIcon: Icon(Icons.visibility),
+                      suffixIcon: IconButton(
+                        icon: Icon(authProvider.obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off),
+                        onPressed: authProvider.changeObscurePassword,
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: authProvider.obscurePassword,
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50), backgroundColor: Colors.green,
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Colors.green,
                     ),
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/main-menu');
+                      authProvider.processRegister(context);
                     },
                     child: const Text('Register'),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/');
-                      },
-                      child: const Text('Already have an account? Login'),
-                    ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Already have an account? Login'),
                   ),
+                  if (authProvider.messageError.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(
+                        authProvider.messageError,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -1,97 +1,119 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_3/providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final _userController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  @override
   Widget build(BuildContext context) {
+    var authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventory Management System'),
         backgroundColor: Colors.blue,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.blue],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Form(
+        key: authProvider.formAuthentication,
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Colors.blue],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Sign in to your Account',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Sign in to your Account',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sign in to your Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Enter your credentials below',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _userController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white70,
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: authProvider.usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white70,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.white70,
-                      suffixIcon: Icon(Icons.visibility),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: authProvider.passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white70,
+                        suffixIcon: IconButton(
+                          icon: Icon(authProvider.obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off),
+                          onPressed: authProvider.changeObscurePassword,
+                        ),
+                      ),
+                      obscureText: authProvider.obscurePassword,
                     ),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50), backgroundColor: Colors.green,
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.green,
+                      ),
+                      onPressed: () {
+                        if (authProvider.formAuthentication.currentState!.validate()) {
+                          authProvider.processLogin(context).then((_) {
+                            if (authProvider.messageError.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Login Successful')),
+                              );
+                              Navigator.pushNamed(context, '/main_menu_page');
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(authProvider.messageError)),
+                              );
+                            }
+                          });
+                        }
+                      },
+                      child: const Text('Login'),
                     ),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/main-menu');
-                    },
-                    child: const Text('Login'),
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
+                    TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/register');
                       },
                       child: const Text('Don\'t have an account? Register'),
                     ),
-                  ),
-                ],
+                    if (authProvider.messageError.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Text(
+                          authProvider.messageError,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

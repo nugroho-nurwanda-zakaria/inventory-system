@@ -7,8 +7,7 @@ class MainMenuPage extends StatefulWidget {
   const MainMenuPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _MainMenuPageState createState() => _MainMenuPageState();
+   State<MainMenuPage> createState() => _MainMenuPageState();
 }
 
 class _MainMenuPageState extends State<MainMenuPage> {
