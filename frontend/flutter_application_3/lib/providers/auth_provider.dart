@@ -20,29 +20,52 @@ class AuthProvider extends ChangeNotifier {
     final String username = usernameController.text.trim();
     final String password = passwordController.text.trim();
 
-    if (username.isNotEmpty && password.isNotEmpty) {
-      try {
-        var requestModel = {'username': username, 'password': password};
-        var response = await Dio().post('$url/${isLogin ? 'login' : 'register'}', data: requestModel);
-
-        if ((isLogin && response.statusCode == 200 && response.data['message'] == 'Login Success') ||
-            (!isLogin && response.statusCode == 201)) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('id', response.data['data']['id']);
-          await prefs.setString('username', response.data['data']['username']);
-          alertAuthSuccess(context, '${isLogin ? 'Login' : 'Registration'} Successful');
-        } else {
-          messageError = response.data['message'] ?? '${isLogin ? 'Login' : 'Registration'} failed';
-          notifyListeners();
-        }
-      } on DioException catch (e) {
-        messageError = e.message ?? 'An error occurred';
-        notifyListeners();
-      }
-    } else {
+    if (username.isEmpty || password.isEmpty) {
       messageError = 'Please fill in all fields';
       notifyListeners();
+      return;
     }
+
+    try {
+      var requestModel = {'username': username, 'password': password};
+      var response = await Dio().post(
+        '$url/${isLogin ? 'login' : 'register'}',
+        data: requestModel,
+      );
+
+      if (isLogin) {
+        handleLoginResponse(context, response);
+      } else {
+        handleRegisterResponse(context, response);
+      }
+    } on DioException catch (e) {
+      messageError = e.response?.data['error'] ?? 'An error occurred';
+      notifyListeners();
+    }
+  }
+
+  void handleLoginResponse(BuildContext context, Response response) {
+    if (response.statusCode == 200 && response.data['message'] == 'Login success') {
+      saveUserData(response.data['data']);
+      alertAuthSuccess(context, response.data['message']);
+    } else {
+      alertAuthFailure(context, response.data['message'] ?? 'Login failed');
+    }
+  }
+
+  void handleRegisterResponse(BuildContext context, Response response) {
+    if (response.statusCode == 201 && response.data['message'] == 'User created successfully') {
+      alertAuthSuccess(context, response.data['message']);
+    } else {
+      alertAuthFailure(context, response.data['message'] ?? 'Registration failed');
+    }
+  }
+
+  Future<void> saveUserData(Map<String, dynamic> userData) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('id', userData['id']);
+    await prefs.setString('username', userData['username']);
+    await prefs.setString('password', userData['password']);
   }
 
   Future<void> processLogin(BuildContext context) => processAuth(context, true);
@@ -58,25 +81,12 @@ class AuthProvider extends ChangeNotifier {
             children: [
               const Icon(Icons.check_circle_outline, color: Colors.green, size: 50),
               const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-              ),
+              Text(message, textAlign: TextAlign.center),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                usernameController.clear();
-                passwordController.clear();
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MainMenuPage(),
-                  ),
-                );
-              },
+              onPressed: () => navigateToMainMenu(context),
               child: const Text('OK'),
             ),
           ],
@@ -85,5 +95,37 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  void navigateToMainMenu(BuildContext context) {}
+  void alertAuthFailure(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 50),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void navigateToMainMenu(BuildContext context) {
+    usernameController.clear();
+    passwordController.clear();
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MainMenuPage()),
+    );
+  }
 }

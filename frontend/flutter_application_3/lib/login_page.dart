@@ -8,7 +8,6 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var authProvider = context.watch<AuthProvider>();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventory Management System'),
@@ -81,20 +80,7 @@ class LoginPage extends StatelessWidget {
                         backgroundColor: Colors.green,
                       ),
                       onPressed: () {
-                        if (authProvider.formAuthentication.currentState!.validate()) {
-                          authProvider.processLogin(context).then((_) {
-                            if (authProvider.messageError.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Login Successful')),
-                              );
-                              Navigator.pushNamed(context, '/main_menu_page');
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(authProvider.messageError)),
-                              );
-                            }
-                          });
-                        }
+                         authProvider.processLogin(context);
                       },
                       child: const Text('Login'),
                     ),

@@ -1,6 +1,6 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_3/providers/product_provider.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -10,26 +10,11 @@ class ProductPage extends StatefulWidget {
 }
 
 class _ProductPageState extends State<ProductPage> {
-  List<String> products = [];
-
-  final TextEditingController _controller = TextEditingController();
-
-  void _addProduct() {
-    setState(() {
-      products.add(_controller.text);
-    });
-    _controller.clear();
-  }
-
-  void _deleteProduct(int index) {
-    setState(() {
-      products.removeAt(index);
-    });
-  }
-
-  void _updateProduct(int index, String newName) {
-    setState(() {
-      products[index] = newName;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductProvider>(context, listen: false).getProductByUserId(context);
     });
   }
 
@@ -44,62 +29,217 @@ class _ProductPageState extends State<ProductPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: 'Product Name',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addProduct,
-                ),
-              ),
+            ElevatedButton(
+              onPressed: () => _showAddProductDialog(context),
+              child: const Text('Add New Product'),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(products[index]),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _controller.text = products[index];
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Update Product'),
-                                content: TextField(
-                                  controller: _controller,
-                                ),
-                                actions: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      _updateProduct(index, _controller.text);
-                                      Navigator.of(context).pop();
-                                      _controller.clear();
-                                    },
-                                    child: const Text('Update'),
-                                  ),
-                                ],
+              child: Consumer<ProductProvider>(
+                builder: (context, productProvider, child) {
+                  if (productProvider.productState == ProductState.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (productProvider.productState == ProductState.nodata) {
+                    return const Center(child: Text('No products found'));
+                  } else if (productProvider.productState == ProductState.error) {
+                    return const Center(child: Text('Error loading products'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: productProvider.listProduct?.length ?? 0,
+                      itemBuilder: (context, index) {
+                        var product = productProvider.listProduct![index];
+                        return ListTile(
+                          title: Text(product.name ?? ''),
+                          subtitle: Text('Qty: ${product.qty}, Category ID: ${product.categoryId}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _showEditProductDialog(context, product),
                               ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _deleteProduct(index),
-                        ),
-                      ],
-                    ),
-                  );
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _showDeleteConfirmationDialog(context, product.id!),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }
                 },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAddProductDialog(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    productProvider.clearControllers(); // Clear the controllers before showing the dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Product'),
+        content: Form(
+          key: productProvider.formProduct,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: productProvider.nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the product name';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: productProvider.qtyController,
+                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the quantity';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: productProvider.categoryIdController,
+                  decoration: const InputDecoration(labelText: 'Category ID'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the category ID';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: productProvider.urlProductImageController,
+                  decoration: const InputDecoration(labelText: 'Image URL'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              productProvider.createProduct(context).then((_) {
+                Navigator.of(context).pop();
+              });
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProductDialog(BuildContext context, dynamic product) {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    productProvider.detailProduct(context, product.id).then((_) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Edit Product'),
+          content: Form(
+            key: productProvider.formProduct,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: productProvider.nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the product name';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: productProvider.qtyController,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the quantity';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: productProvider.categoryIdController,
+                    decoration: const InputDecoration(labelText: 'Category ID'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the category ID';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: productProvider.urlProductImageController,
+                    decoration: const InputDecoration(labelText: 'Image URL'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                productProvider.updateProduct(context, product.id).then((_) {
+                  Navigator.of(context).pop();
+                });
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, int productId) {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: const Text('Are you sure you want to delete this product?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              productProvider.deleteProduct(context, productId).then((_) {
+                Navigator.of(context).pop();
+              });
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
