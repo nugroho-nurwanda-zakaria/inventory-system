@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_3/providers/auth_provider.dart';
 import 'package:flutter_application_3/providers/category_provider.dart';
 import 'package:flutter_application_3/login_page.dart';
-import 'package:flutter_application_3/providers/product_provider.dart';
+// import 'package:flutter_application_3/providers/product_provider.dart';
 import 'package:flutter_application_3/register_page.dart';
 import 'package:flutter_application_3/main_menu_page.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +13,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
-        ChangeNotifierProvider(create: (_) => ProductProvider()),
+       // ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
       child: const MyApp(),
     ),
